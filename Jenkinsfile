@@ -1,20 +1,34 @@
 pipeline {
     agent any
-    tools {
-        maven 'M2_HOME'
-        jdk 'JAVA_HOME'
-    }
     stages {
         stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Build Backend') {
             steps {
-                checkout scm
+                dir('backend') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
         }
-        stage('Build Maven') {
+        stage('Test Backend') {
             steps {
-                dir('DevOps-AppGestionDesProjets-main/backend') {
-                    sh 'mvn compile'
+                dir('backend') {
+                    sh 'mvn test'
                 }
+            }
+        }
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
             }
         }
     }
